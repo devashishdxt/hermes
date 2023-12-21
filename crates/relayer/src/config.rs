@@ -106,7 +106,7 @@ impl PartialOrd for GasPrice {
 /// the parsing of other prices.
 pub fn parse_gas_prices(prices: String) -> Vec<GasPrice> {
     prices
-        .split(';')
+        .split(|c| c == ',' || c == ';')
         .filter_map(|gp| GasPrice::from_str(gp).ok())
         .collect()
 }
@@ -819,8 +819,8 @@ mod tests {
             },
         ];
 
-        assert_eq!(expected, parsed);
-    }
+            assert_eq!(expected, parsed);
+        }
 
     #[test]
     fn parse_empty_gas_price() {
@@ -840,6 +840,6 @@ mod tests {
             denom: "token3".to_owned(),
         }];
 
-        assert_eq!(expected, parsed);
+            assert_eq!(expected, parsed);
+        }
     }
-}
