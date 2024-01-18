@@ -24,7 +24,7 @@ pub async fn estimate_gas(
     trace!("estimate gas params: {}", params);
 
     let request = json!({
-        "version": "2.0",
+        "jsonrpc": "2.0",
         "method": "eth_estimateGas",
         "params": params,
         "id": 1,
