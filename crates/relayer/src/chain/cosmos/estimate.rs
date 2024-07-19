@@ -93,18 +93,18 @@ async fn estimate_fee_with_tx(
 
     let estimated_gas_amount = estimated_gas.get_amount();
 
-    if estimated_gas_amount > gas_config.max_gas {
-        debug!(
-            id = %chain_id, estimated = ?estimated_gas_amount, max = ?gas_config.max_gas,
-            "send_tx: estimated gas is higher than max gas"
-        );
+    // if estimated_gas_amount > gas_config.max_gas {
+    //     debug!(
+    //         id = %chain_id, estimated = ?estimated_gas_amount, max = ?gas_config.max_gas,
+    //         "send_tx: estimated gas is higher than max gas"
+    //     );
 
-        return Err(Error::tx_simulate_gas_estimate_exceeded(
-            chain_id.clone(),
-            estimated_gas_amount,
-            gas_config.max_gas,
-        ));
-    }
+    //     return Err(Error::tx_simulate_gas_estimate_exceeded(
+    //         chain_id.clone(),
+    //         estimated_gas_amount,
+    //         gas_config.max_gas,
+    //     ));
+    // }
 
     let adjusted_fee =
         gas_amount_to_fee(gas_config, estimated_gas_amount, chain_id, rpc_address).await;
