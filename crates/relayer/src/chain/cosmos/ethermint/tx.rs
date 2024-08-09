@@ -1,3 +1,5 @@
+use std::{thread, time::Duration};
+
 use ibc_proto::{
     cosmos::{
         base::v1beta1::Coin,
@@ -75,7 +77,7 @@ pub async fn build_tx_raw(
     ))
 }
 
-/// Builds the `DynamicFeeTx` for the given message.
+/// Builds the `DynamicFeeTx` for the given message with retry logic.
 async fn build_dynamic_fee_tx(
     messages: &[Any],
     account: &Account,
@@ -107,7 +109,13 @@ async fn build_dynamic_fee_tx(
         tx.gas_tip_cap = gas_tip_cap;
     }
 
-    if config.json_rpc_address.is_some() {
+    if !config.json_rpc_address.is_some() {
+        return Ok((tx, EstimatedGas::Default(config.gas_config.max_gas)))
+    }
+
+    let max_retries = 5;
+    let mut retries = 0;
+    loop {
         match estimate_gas(&tx, key_pair, config).await {
             Ok(estimated_gas) => {
                 let adjusted_gas = adjust_estimated_gas(AdjustGas {
@@ -126,15 +134,20 @@ async fn build_dynamic_fee_tx(
 
                 tx.gas = adjusted_gas;
 
-                Ok((tx, EstimatedGas::Simulated(adjusted_gas)))
+                return Ok((tx, EstimatedGas::Simulated(adjusted_gas)))
             }
             Err(e) => {
-                tracing::error!("failed to estimate ethermint gas: {:?}", e);
-                Ok((tx, EstimatedGas::Default(config.gas_config.max_gas)))
+                retries += 1;
+                tracing::error!("failed to estimate ethermint gas: {:?} after {:?} retries", e, retries);
+
+                if retries >= max_retries {
+                    tracing::error!("failed to estimate ethermint gas after max retries");
+                    return Ok((tx, EstimatedGas::Default(config.gas_config.max_gas)));
+                }
+
+                thread::sleep(Duration::from_millis(500));
             }
         }
-    } else {
-        Ok((tx, EstimatedGas::Default(config.gas_config.max_gas)))
     }
 }
 
